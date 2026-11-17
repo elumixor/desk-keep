@@ -1,0 +1,53 @@
+{
+  "$schema": "https://biomejs.dev/schemas/2.6.3/schema.json",
+  "vcs": {
+    "enabled": true,
+    "clientKind": "git",
+    "useIgnoreFile": true
+  },
+  "files": {
+    "includes": [
+      "**",
+      "!**/dist",
+      "!apps/backend/.output",
+      "!apps/backend/.nitro",
+      "!apps/backend/server/db/migrations",
+      "!apps/frontend/.svelte-kit",
+      "!apps/frontend/build",
+      "!apps/frontend/src/lib/api-client",
+      "!**/*.svelte",
+      "!infra"
+    ]
+  },
+  "formatter": {
+    "enabled": true,
+    "indentStyle": "space",
+    "indentWidth": 2,
+    "lineWidth": 120
+  },
+  "css": {
+    "parser": {
+      "tailwindDirectives": true
+    }
+  },
+  "javascript": {
+    "formatter": {
+      "quoteStyle": "double",
+      "semicolons": "always",
+      "trailingCommas": "all"
+    }
+  },
+  "linter": {
+    "enabled": true,
+    "rules": {
+      "preset": "recommended",
+      "a11y": {
+        "useValidAriaRole": "off",
+        "noAriaUnsupportedElements": "off"
+      },
+      "style": {
+        "noDescendingSpecificity": "off"
+      }
+    }
+  }
+}

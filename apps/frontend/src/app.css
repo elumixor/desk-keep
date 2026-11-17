@@ -1,0 +1,815 @@
+@import "tailwindcss";
+
+@import "@desk/core/tokens.css";
+@import "@desk/editor/editor.css";
+
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
+/*
+ * Colours, radii, type and shadows come from @desk/core; Keep only adds what is its own: the page's canvas and the
+ * sidebar's quieter grey (Notion's layout), and where the editor's content sits.
+ */
+:root {
+  --page: var(--surface);
+  --sidebar: var(--surface-2);
+  --page-width: 720px;
+}
+
+@theme inline {
+  --color-page: var(--page);
+  --color-sidebar: var(--sidebar);
+  --font-sans: var(--font-ui);
+  /* What the page's blocks come in with (editor/stream.ts), for what is drawn beside them. */
+  --animate-appear: appear 220ms ease-out both;
+  /* Shown only for a load that takes a moment, so a quick one does not flicker. */
+  --animate-skeleton: skeleton 200ms ease-out 150ms both;
+
+  @keyframes skeleton {
+    from {
+      opacity: 0;
+    }
+  }
+
+  @keyframes appear {
+    from {
+      opacity: 0;
+      transform: translateY(4px);
+    }
+  }
+}
+
+html,
+body {
+  background: var(--page);
+  color: var(--ink);
+  font-family: var(--font-ui);
+  font-size: 14px;
+  font-feature-settings: "cv11", "ss01";
+  -webkit-font-smoothing: antialiased;
+}
+
+@layer base {
+  :focus-visible {
+    outline: none;
+  }
+  /* Set on the field itself, so no caret is inherited from what it sits in (the editor hides its own in Vim mode). */
+  :is(input, textarea) {
+    caret-color: var(--accent);
+  }
+}
+
+::selection {
+  background: var(--selection);
+}
+/* The selection wash is close to a focused field's own grey; in a field the accent's shows on it. */
+.field::selection {
+  background: color-mix(in srgb, var(--accent) 30%, transparent);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    /* biome-ignore lint/complexity/noImportantStyles: reduced motion has to beat every component's own timing */
+    animation-duration: 0.01ms !important;
+    /* biome-ignore lint/complexity/noImportantStyles: as above */
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* What the model would write at the caret, until Tab takes it: greyed, laid out as the text it would become. */
+.prose-keep .completion-ghost {
+  color: var(--ink-45);
+  white-space: pre-wrap;
+  pointer-events: none;
+  user-select: none;
+}
+.prose-keep .inline-emoji {
+  display: inline-block;
+  vertical-align: -0.25em;
+  line-height: 1;
+  border-radius: var(--r-xs);
+}
+.prose-keep .inline-emoji.ProseMirror-selectednode {
+  background: var(--selection);
+}
+/*
+ * A clickable item, one look everywhere (ui/Item.svelte). `item` takes a size, `item-normal` (a property row) or
+ * `item-small` (the links under a title), and a width, `item-fixed` (fills its column) or `item-hug` (fits what it
+ * holds). `item-inline` alone sits in text, sized by it (a mention, a link). Both sizes are padded alike, so a column of
+ * them keeps its icons on one edge; `item-edge`, on an item or on a row of them, pulls them back by that padding, so the
+ * icons sit on the text's edge (the title's). Pointed at or focused: a wash and the full ink; selected
+ * (`data-selected="true"`): a deeper wash.
+ */
+@layer components {
+  /* `a.item` as well, to win over the editor's own links. */
+  :is(.item, a.item) {
+    display: flex;
+    align-items: center;
+    padding-inline: 0.5rem;
+    border-radius: var(--r-sm);
+    color: var(--ink-45);
+    font-weight: 400;
+    text-align: left;
+    white-space: nowrap;
+    text-decoration: none;
+    transition:
+      background-color var(--dur-fast) var(--ease),
+      color var(--dur-fast) var(--ease);
+  }
+  .item > svg {
+    flex-shrink: 0;
+  }
+  .item-normal {
+    height: 2rem;
+    gap: 0.375rem;
+    font-size: 14px;
+  }
+  .item-normal > svg {
+    width: 16px;
+    height: 16px;
+  }
+  .item-small {
+    height: 1.5rem;
+    gap: 0.25rem;
+    font-size: 13px;
+  }
+  .item-small > svg {
+    width: 14px;
+    height: 14px;
+  }
+  .item-fixed {
+    width: 100%;
+    min-width: 0;
+  }
+  .item-hug {
+    width: fit-content;
+    max-width: 100%;
+  }
+  .item-edge {
+    margin-inline-start: -0.5rem;
+  }
+  .item-edge.item-fixed {
+    width: calc(100% + 0.5rem);
+  }
+  /* Pulled back, a hugging item would otherwise lose its right padding to its container's width. */
+  .item-edge.item-hug {
+    max-width: calc(100% + 0.5rem);
+  }
+  :is(a.item, button.item:enabled):hover,
+  .item:focus-visible {
+    background: var(--ink-5);
+    color: var(--ink);
+  }
+  .item[data-selected="true"] {
+    background: var(--ink-10);
+    color: var(--ink);
+  }
+  .item-inline {
+    padding: 0 0.15em;
+    border-radius: var(--r-xs);
+    cursor: pointer;
+    transition: background-color var(--dur-fast) var(--ease);
+  }
+  .item-inline:hover,
+  .item-inline:focus-visible {
+    background: var(--ink-5);
+  }
+  /* What the context menu was opened on (ui/ContextMenu.svelte), washed while it is open. */
+  [data-menu-open] {
+    background: var(--ink-5);
+  }
+  /* A row of a popup menu (ui/MenuItem.svelte): roomier than an item, the same wash pointed at or under the keyboard (`data-active="true"`); the one chosen, `data-selected="true"`. */
+  .menu-item {
+    display: flex;
+    width: 100%;
+    min-height: 2.25rem;
+    align-items: center;
+    gap: 0.625rem;
+    padding-inline: 0.625rem;
+    border-radius: var(--r);
+    text-align: left;
+    text-decoration: none;
+    transition: background-color var(--dur-fast) var(--ease);
+  }
+  .menu-item > svg {
+    flex-shrink: 0;
+  }
+  .menu-item:hover,
+  .menu-item:focus-visible,
+  .menu-item[data-active="true"] {
+    background: var(--ink-5);
+  }
+  .menu-item[data-selected="true"] {
+    background: var(--ink-10);
+    font-weight: 500;
+  }
+}
+/*
+ * A destructive control, red (`text-hot`) or turning red when pointed at (`hover:text-hot`), is washed in red, never
+ * the grey of other controls. Outside the layers, so it wins over a `hover:bg-…` the control also has.
+ */
+:is(button, a, .menu-item).text-hot:is(:hover, :focus-visible, [data-active="true"]):not(:disabled),
+:is(button, a)[class~="hover:text-hot"]:is(:hover, :focus-visible):not(:disabled) {
+  background: color-mix(in srgb, var(--hot) 10%, transparent);
+}
+.mention {
+  font-weight: 500;
+  text-decoration: underline;
+  text-decoration-color: var(--ink-20);
+  text-underline-offset: 3px;
+}
+.date-mention {
+  font-weight: 500;
+  white-space: nowrap;
+}
+.date-mention-icon {
+  display: inline-block;
+  width: 1em;
+  height: 1em;
+  margin-right: 0.3em;
+  vertical-align: -0.12em;
+  color: var(--ink-45);
+}
+.date-mention.ProseMirror-selectednode:not(.prose-keep *) {
+  background: var(--selection);
+  border-radius: var(--r-xs);
+}
+.mention.has-icon::before {
+  content: none;
+}
+.mention-icon {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.2em;
+  height: 1.2em;
+  line-height: 1;
+  vertical-align: middle;
+  margin-right: 0.3em;
+  color: var(--ink-45);
+}
+.link-favicon {
+  display: inline-block;
+  width: 1em;
+  height: 1em;
+  border-radius: 2px;
+  background: center / contain no-repeat;
+}
+.mention-arrow {
+  position: absolute;
+  right: -0.15em;
+  bottom: -0.1em;
+  display: grid;
+  place-items: center;
+  color: var(--ink);
+}
+.mention-arrow > * {
+  grid-area: 1 / 1;
+}
+.mention-arrow svg.lucide {
+  stroke-width: 3.2px;
+}
+.mention-arrow svg.lucide.halo {
+  stroke-width: 12px;
+  color: var(--page);
+}
+/* Another app's record named in text (a Balance block): the shared `@desk/core` pill, clipped to the line. */
+.mention-pill {
+  display: inline-flex;
+  min-width: 0;
+  max-width: min(100%, 480px);
+  vertical-align: bottom;
+  --pill-halo: var(--page);
+}
+.mention-trash {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2em;
+  margin: -0.2em 0 -0.2em 0.4em;
+  padding: 0 0.4em;
+  font-size: 0.8em;
+  line-height: 1.4;
+  vertical-align: middle;
+  border-radius: var(--r-xs);
+  background: var(--ink-5);
+  color: var(--ink-45);
+  font-weight: 400;
+  text-decoration: none;
+}
+/* A mentioned view's "show it here" button: shown while the mention is pointed at. */
+.mention-expand {
+  display: none;
+  place-items: center;
+  margin: -0.2em 0 -0.2em 0.3em;
+  padding: 0.15em 0.3em;
+  vertical-align: middle;
+  border-radius: var(--r-xs);
+  color: var(--ink-45);
+  cursor: pointer;
+}
+.mention:hover .mention-expand {
+  display: inline-grid;
+}
+.mention-expand:hover {
+  background: var(--ink-10);
+  color: var(--ink);
+}
+.mention::before {
+  content: "";
+  display: inline-block;
+  width: 0.9em;
+  height: 0.9em;
+  margin-right: 0.2em;
+  vertical-align: -0.1em;
+  background: var(--ink-45);
+  mask:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M7 7h10v10'/%3E%3Cpath d='M7 17 17 7'/%3E%3C/svg%3E")
+    center / contain no-repeat;
+}
+/* A selected view is tinted over the whole page width its body spans, the tint laid over what it shows. */
+.prose-keep [data-view-block].ProseMirror-selectednode {
+  position: relative;
+  background: none;
+}
+.prose-keep [data-view-block].ProseMirror-selectednode::after {
+  content: "";
+  position: absolute;
+  inset-block: 0;
+  left: calc(50% - 50cqw);
+  width: 100cqw;
+  z-index: 1;
+  pointer-events: none;
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
+}
+
+/* Every icon is lucide at one weight, in the colour of the text it sits in. */
+svg.lucide {
+  stroke-width: 1.5px;
+  flex-shrink: 0;
+}
+
+/* A date field shows its picker only when asked, as the rest of a quiet table does. */
+input[type="date"]::-webkit-calendar-picker-indicator {
+  opacity: 0;
+  cursor: pointer;
+  transition: opacity var(--dur-fast) var(--ease);
+}
+input[type="date"]:hover::-webkit-calendar-picker-indicator,
+input[type="date"]:focus::-webkit-calendar-picker-indicator {
+  opacity: 0.5;
+}
+[data-theme="dark"] input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: invert(1);
+}
+
+/* The page's title, the editor's first line (editor/title.ts), with the icon above it and the properties below. */
+.prose-keep [data-page-head] {
+  margin-bottom: 1.5rem;
+}
+
+/* A trait or view is its title alone: its body is not shown. */
+.prose-brief [data-page-head] {
+  margin-bottom: 0;
+}
+.prose-brief > [data-page-head] ~ * {
+  display: none;
+}
+
+.prose-keep [data-page-head] [contenteditable="false"] {
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.prose-keep .page-title {
+  position: relative;
+  margin: 0;
+  font-family: var(--font-ui);
+  font-size: 40px;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -0.02em;
+}
+
+/* Emoji and mentions in the title are atoms (contenteditable="false") but take the title's size, not the head's. */
+.prose-keep .page-title [contenteditable="false"] {
+  font-size: inherit;
+  line-height: inherit;
+}
+
+[data-kind] .page-title:not([data-empty])::after,
+.mention-kind {
+  display: inline-flex;
+  vertical-align: middle;
+  margin-left: 0.4em;
+  padding: 0 0.5em;
+  font-family: var(--font-ui);
+  font-size: 0.7em;
+  font-weight: 400;
+  line-height: 1.5;
+  letter-spacing: normal;
+  border-radius: 999px;
+  background: var(--ink-5);
+  color: var(--ink-45);
+  text-decoration: none;
+  user-select: none;
+  pointer-events: none;
+}
+[data-kind] .page-title:not([data-empty])::after {
+  font-size: 0.35em;
+  width: 2em;
+  height: 1.7em;
+  padding: 0;
+  background-position: center;
+  background-size: 1.1em;
+  background-repeat: no-repeat;
+}
+/* A trait or view says what it is in a pill after its title, as everywhere it is named (ui/KindPill.svelte). */
+[data-kind="trait"] .page-title:not([data-empty])::after {
+  content: "";
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%238b8fa3' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M8.3 10a.7.7 0 0 1-.626-1.079L11.4 3a.7.7 0 0 1 1.198-.043L16.3 8.9a.7.7 0 0 1-.572 1.1Z'/%3E%3Crect x='3' y='14' width='7' height='7' rx='1'/%3E%3Ccircle cx='17.5' cy='17.5' r='3.5'/%3E%3C/svg%3E");
+}
+[data-kind="view"] .page-title:not([data-empty])::after {
+  content: "";
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%238b8fa3' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M9 3H5a2 2 0 0 0-2 2v4m6-6h10a2 2 0 0 1 2 2v4M9 3v18m0 0h10a2 2 0 0 0 2-2V9M9 21H5a2 2 0 0 1-2-2V9m0 0h18'/%3E%3C/svg%3E");
+}
+
+.prose-keep .page-title .mention {
+  font-weight: inherit;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 6px;
+}
+
+.prose-keep .page-title[data-empty]::after {
+  content: "Untitled";
+  position: absolute;
+  top: 0;
+  left: 0;
+  color: var(--ink-20);
+  pointer-events: none;
+}
+
+@media (max-width: 767px) {
+  .prose-keep .page-title {
+    font-size: 32px;
+  }
+}
+
+/* A narrow page keeps its text to the page width; a view's body in it spans the whole page (`.view-full`). */
+article[data-narrow] .prose-keep > *,
+article[data-narrow] > :not(:has(.prose-keep)) {
+  max-width: var(--page-width);
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* A view's body spans the page's whole width, from wherever its box sits centred in the page (the page is its container). */
+.view-full {
+  margin-inline: calc(50% - 50cqw);
+}
+/* How far in from a view body's edge the page title sits, inside a page only. */
+[data-testid="view-page"] {
+  --view-gutter: calc(var(--spacing) * 6);
+}
+@media (min-width: 48rem) {
+  [data-testid="view-page"] {
+    --view-gutter: calc(var(--spacing) * 24);
+  }
+}
+article[data-narrow] [data-testid="view-page"] {
+  --view-gutter: max(calc(var(--spacing) * 6), (100cqw - var(--page-width)) / 2);
+}
+@media (min-width: 48rem) {
+  article[data-narrow] [data-testid="view-page"] {
+    --view-gutter: max(calc(var(--spacing) * 24), (100cqw - var(--page-width)) / 2);
+  }
+}
+/* A list view's rows line up with the page title. */
+.list-aligned {
+  padding-inline: var(--view-gutter, 0);
+}
+/* A view's header keeps to the text, its underline spans the page as the body does. */
+.view-rule {
+  position: relative;
+}
+.view-rule::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: calc(50% - 50cqw);
+  width: 100cqw;
+  border-bottom: 1px solid var(--line);
+}
+
+/*
+ * A text field (`TextField.svelte`), one of three: `field-filled`, a box of its own (forms, a search over a list);
+ * `field-ghost`, text in place that shows it can be typed into only when pointed at or focused (a value, a title,
+ * a description); `field-bare`, the text alone, inside something drawn as the field (a palette, a menu's row).
+ * Every one has the accent caret and the same placeholder; a read-only one never reacts.
+ */
+@layer components {
+  .field {
+    min-width: 0;
+    border-radius: var(--r-sm);
+    background: transparent;
+    color: inherit;
+    caret-color: var(--accent);
+    outline: none;
+    transition: background-color var(--dur-fast) var(--ease);
+  }
+  .field::placeholder {
+    color: var(--ink-30);
+  }
+  textarea.field {
+    resize: none;
+    padding-block: 0.375rem;
+  }
+  /* The standard (a menu's search, the description): the others are for what this would crowd. */
+  .field-filled {
+    height: 2rem;
+    padding-inline: 0.625rem;
+    border-radius: var(--r);
+    background: var(--ink-5);
+  }
+  .field-ghost {
+    height: 1.75rem;
+    padding-inline: 0.375rem;
+  }
+  textarea:is(.field-filled, .field-ghost) {
+    height: auto;
+  }
+  .field-filled:is(:hover, :focus):not(:read-only, :disabled),
+  .field-ghost:focus:not(:read-only, :disabled) {
+    background: var(--ink-10);
+  }
+  .field-ghost:hover:not(:focus, :read-only, :disabled),
+  .field-ghost[data-idle] {
+    background: var(--ink-5);
+  }
+  /* Selected, not being edited (`TextField`): no caret until Enter. */
+  .field-ghost[data-idle] {
+    caret-color: transparent;
+    box-shadow: inset 0 0 0 1px var(--ink-10);
+  }
+  .field-bare {
+    border-radius: 0;
+  }
+}
+
+/*
+ * A script's editor (`code/CodeEditor.svelte`, Monaco): references drawn as pills, the id a page is written as hidden
+ * behind its title, and the completion list and hovers as the app's own popups rather than VS Code's (the class
+ * twice, to win over Monaco's own rules).
+ */
+/*
+ * Line numbers as a page's (`.vim-lines`): small, faded, all to the right, the current one (absolute among relative
+ * ones) in line with the rest rather than pushed left, and none shifted by a pixel on odd lines.
+ */
+.monaco-editor.monaco-editor .line-numbers {
+  font-size: 12px;
+  opacity: 0.3;
+  margin-top: 0;
+}
+.monaco-editor.monaco-editor .line-numbers.active-line-number {
+  opacity: 0.5;
+}
+.monaco-editor.monaco-editor .relative-current-line-number {
+  text-align: right;
+}
+/* A script's names: calls and members in the code blocks' colours; what is done in the presser's app faded. */
+.monaco-editor .script-call {
+  color: var(--syntax-title);
+}
+.monaco-editor .script-member {
+  color: var(--syntax-name);
+}
+.script-client {
+  color: var(--accent);
+  font-style: italic;
+  opacity: 0.55;
+}
+.monaco-editor .script-hidden {
+  font-size: 0;
+  letter-spacing: 0;
+}
+.monaco-editor .script-pill {
+  border-radius: 4px;
+  background: var(--ink-10);
+  color: var(--text);
+  padding-inline: 3px;
+}
+.monaco-editor .script-pill-page::before,
+.monaco-editor .script-pill-icon::before {
+  content: "";
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  margin-right: 4px;
+  vertical-align: -2px;
+  line-height: 14px;
+  text-decoration: none;
+}
+/* Vim's command line in a script's editor (`:`, `/`), drawn by monaco-vim: shown only while typed in or saying something. */
+.vim-command-line:not(:has(input, .vim-notification:not(:empty))) {
+  visibility: hidden;
+}
+.vim-command-line > span:has(input) {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  color: var(--ink-45);
+}
+.vim-command-line input {
+  flex: 1;
+  border: none;
+  outline: none;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+}
+.vim-command-line .vim-notification {
+  color: var(--hot);
+}
+/* A pill Vim's block caret stands on: drawn as the caret, which hides. */
+.monaco-editor .script-pill-cursor {
+  background: var(--vim-cursor);
+}
+.script-caret-on-pill .cursors-layer .cursor {
+  opacity: 0;
+}
+/* A property's pill: its icon (injected) and its name, drawn as one. */
+.monaco-editor .script-pill-icon {
+  border-radius: 4px 0 0 4px;
+  padding-right: 0;
+  color: var(--ink-45);
+}
+.monaco-editor .script-pill-named {
+  border-radius: 0 4px 4px 0;
+}
+/* A page's pill reads as a page named in a page's text (`.mention`): its icon, then its title, underlined, no chip. */
+.monaco-editor .script-pill-page {
+  font-family: var(--font-ui);
+  font-weight: 500;
+  text-decoration: underline;
+  text-decoration-color: var(--ink-20);
+  text-underline-offset: 3px;
+  background: none;
+  padding-inline: 0;
+}
+.monaco-editor .script-pill-page::before {
+  width: 1.1em;
+  height: 1.1em;
+  margin-right: 0.3em;
+  vertical-align: -0.2em;
+  color: var(--ink-45);
+}
+.monaco-editor .script-pill-page.script-pill-cursor {
+  background: var(--vim-cursor);
+}
+.monaco-editor.monaco-editor .suggest-widget,
+.monaco-editor.monaco-editor .suggest-details-container .suggest-details,
+.monaco-editor.monaco-editor .monaco-hover {
+  border: none;
+  border-radius: var(--r);
+  background: var(--surface);
+  box-shadow: var(--float-shadow);
+  font-family: var(--font-ui);
+  overflow: hidden;
+}
+.monaco-editor.monaco-editor .suggest-widget .monaco-list .monaco-list-row {
+  border-radius: 6px;
+  padding-inline: 4px;
+}
+.monaco-editor.monaco-editor .suggest-widget .monaco-list {
+  padding: 4px;
+}
+.monaco-editor.monaco-editor .suggest-widget .monaco-list .monaco-list-row.focused {
+  background: var(--ink-5);
+  color: var(--text);
+}
+.monaco-editor.monaco-editor .suggest-widget .monaco-list .monaco-list-row .highlight {
+  color: var(--accent);
+  font-weight: 600;
+}
+.monaco-editor.monaco-editor .suggest-widget .monaco-list .monaco-list-row .label-description,
+.monaco-editor.monaco-editor .suggest-widget .monaco-list .monaco-list-row .details-label {
+  color: var(--dim);
+  font-size: 12px;
+  opacity: 1;
+}
+.monaco-editor.monaco-editor .suggest-widget .monaco-list .monaco-list-row .suggest-icon {
+  color: var(--ink-45);
+}
+.monaco-editor.monaco-editor .suggest-details-container .suggest-details,
+.monaco-editor.monaco-editor .monaco-hover {
+  color: var(--ink-70);
+  font-size: 13px;
+}
+.monaco-editor.monaco-editor .suggest-details-container .suggest-details .header,
+.monaco-editor.monaco-editor .monaco-hover code {
+  font-family: var(--mono);
+}
+
+/* The shadow a sidebar casts over what it sits beside: black in every theme, deeper on a dark one to show at all. */
+:root {
+  --edge-shadow: rgb(0 0 0 / 0.05);
+  --edge-shadow-strong: rgb(0 0 0 / 0.1);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --edge-shadow: rgb(0 0 0 / 0.3);
+    --edge-shadow-strong: rgb(0 0 0 / 0.45);
+  }
+}
+:root[data-theme="dark"] {
+  --edge-shadow: rgb(0 0 0 / 0.3);
+  --edge-shadow-strong: rgb(0 0 0 / 0.45);
+}
+
+/* The comment composer (comments/CommentField.svelte): Keep's TipTap without the page's prose spacing. */
+.comment-host .comment-field {
+  caret-color: var(--accent);
+}
+.comment-host .comment-field p {
+  margin: 0;
+  line-height: 1.5rem;
+  overflow-wrap: anywhere;
+}
+.comment-host .comment-field p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  float: left;
+  height: 0;
+  pointer-events: none;
+  color: var(--ink-30);
+}
+
+/* A person mention (editor/PersonMention.svelte): the avatar inline with the name. */
+.person-mention {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.25em;
+}
+.person-mention img,
+.person-mention span {
+  width: 1.15em;
+  height: 1.15em;
+  align-self: center;
+}
+
+/* A search field (people/PersonOrEmailPicker.svelte) looks like any other: no native clear button or decoration. */
+.field[type="search"]::-webkit-search-cancel-button,
+.field[type="search"]::-webkit-search-decoration {
+  appearance: none;
+}
+
+/* A toggle (`/toggle`): a chevron left of its summary, the body under the summary's text, hidden until opened. */
+.prose-keep [data-type="details"] {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.125rem;
+}
+.prose-keep [data-type="details"] > button {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 1.5rem;
+  height: 1lh;
+  margin-left: -0.25rem;
+  border-radius: var(--r-xs);
+  background: none;
+  color: var(--ink-45);
+  cursor: pointer;
+  transition:
+    background-color var(--dur-fast) var(--ease),
+    color var(--dur-fast) var(--ease);
+}
+.prose-keep [data-type="details"] > button:hover {
+  background: var(--ink-5);
+  color: var(--ink);
+}
+.prose-keep [data-type="details"] > button svg {
+  transition: transform var(--dur-fast) var(--ease);
+}
+.prose-keep [data-type="details"].is-open > button svg {
+  transform: rotate(90deg);
+}
+.prose-keep [data-type="details"] > div {
+  flex: 1;
+  min-width: 0;
+}
+.prose-keep [data-type="details"] summary {
+  display: block;
+  list-style: none;
+  font-weight: 500;
+}
+.prose-keep [data-type="details"] summary::-webkit-details-marker {
+  display: none;
+}
+.prose-keep [data-type="detailsContent"] > * + * {
+  margin-top: 0.25em;
+}
+.prose-keep [data-type="detailsContent"][hidden] {
+  display: none;
+}

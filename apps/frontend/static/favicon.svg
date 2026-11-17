@@ -1,0 +1,17 @@
+<svg width="128" height="128" viewBox="0 0 128 128" fill="none" xmlns="http://www.w3.org/2000/svg">
+<title>Keep</title><style>@media (prefers-color-scheme:dark){[stroke="black"]{stroke:#fff}[fill="black"]{fill:#fff}}</style>
+<g clip-path="url(#clip0_41_415)">
+<path d="M70.7356 60.1528V87.9371C70.7356 90.6986 68.497 92.9371 65.7356 92.9371H9.20258C6.44116 92.9371 4.20258 90.6986 4.20258 87.9371V22.2076C4.20258 20.8815 4.72937 19.6098 5.66705 18.6721L17.6839 6.6552C18.6216 5.71752 19.8934 5.19073 21.2195 5.19073H65.7356C68.497 5.19073 70.7356 7.42931 70.7356 10.1907V51.9567" stroke-width="4" stroke-linecap="round" stroke="black"/>
+<path d="M95.3137 94.6715L81.2938 119.022C79.9159 121.415 76.859 122.238 74.4658 120.86L30.7194 95.6734M99.4423 87.5006L120.505 50.9172C121.883 48.5241 121.06 45.4671 118.667 44.0893L98.4353 32.441" stroke-width="4" stroke-linecap="round" stroke="black"/>
+<path d="M90.7005 19.3898L96.4182 20.9601C99.0792 21.6909 100.645 24.4393 99.9168 27.101L78.9723 103.653C78.2436 106.317 75.4936 107.885 72.8301 107.156L20.8592 92.9372M70.7355 13.9158L82.7886 17.1995" stroke-width="4" stroke-linecap="round" stroke="black"/>
+<path d="M17.6584 28.84H31.6584V77H17.6584V28.84ZM34.5984 60.13V45.08L45.6584 28.84H60.9184L44.3284 51.52L61.1284 77H45.4484L34.5984 60.13Z" fill="black"/>
+<path d="M71.8524 23L90.4646 27.9871" stroke-width="4" stroke-linecap="round" stroke="black"/>
+<path d="M71.5 33.5851L80.4646 35.9871" stroke-width="4" stroke-linecap="round" stroke="black"/>
+<path d="M96.7525 42.5L110.564 50.4739" stroke-width="4" stroke-linecap="round" stroke="black"/>
+</g>
+<defs>
+<clipPath id="clip0_41_415">
+<rect width="128" height="128" fill="white"/>
+</clipPath>
+</defs>
+</svg>

@@ -1,0 +1,2 @@
+DROP INDEX "page_title";--> statement-breakpoint
+CREATE UNIQUE INDEX "page_title" ON "page" USING btree ("parent_id",lower("title")) WHERE "page"."deleted_at" is null and "page"."title" <> '' and "page"."kind" <> 'trait';

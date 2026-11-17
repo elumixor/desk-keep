@@ -1,0 +1,1 @@
+ALTER TABLE "layout" ADD COLUMN "property_order" jsonb DEFAULT '[]'::jsonb NOT NULL;

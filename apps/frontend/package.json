@@ -1,0 +1,51 @@
+{
+  "name": "@keep/frontend",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite dev --host --port 5240",
+    "build": "vite build && vite build -c vite.elements.config.ts",
+    "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --fail-on-warnings"
+  },
+  "dependencies": {
+    "@clerk/clerk-js": "^6.26.0",
+    "@desk/core": "github:elumixor/desk-core#b788da1",
+    "@desk/editor": "github:elumixor/desk-editor#2d39df6",
+    "@elumixor/synced": "^0.3.1",
+    "@jitl/quickjs-singlefile-browser-release-asyncify": "0.32.0",
+    "@jitl/quickjs-singlefile-browser-release-sync": "0.32.0",
+    "@tiptap/core": "^3.32.0",
+    "@tiptap/extension-details": "3.32.0",
+    "@tiptap/extension-image": "^3.32.0",
+    "@tiptap/extension-link": "^3.32.0",
+    "@tiptap/extension-mention": "^3.32.0",
+    "@tiptap/extension-placeholder": "^3.32.0",
+    "@tiptap/extension-table": "^3.32.0",
+    "@tiptap/extension-task-list": "^3.32.0",
+    "@tiptap/extension-underline": "^3.32.0",
+    "@tiptap/markdown": "^3.32.0",
+    "@tiptap/pm": "^3.32.0",
+    "@tiptap/starter-kit": "^3.32.0",
+    "@tiptap/suggestion": "^3.32.0",
+    "diff": "^9.0.0",
+    "emojibase-data": "18.0.0",
+    "lottie-web": "5.13.0",
+    "lucide-svelte": "^1.0.1",
+    "mermaid": "12.1.0",
+    "monaco-editor": "0.57.0",
+    "monaco-vim": "0.4.4",
+    "quickjs-emscripten-core": "0.32.0",
+    "sucrase": "3.35.1"
+  },
+  "devDependencies": {
+    "@sveltejs/adapter-static": "^3.0.10",
+    "@sveltejs/kit": "^2.63.0",
+    "@sveltejs/vite-plugin-svelte": "^7.1.2",
+    "@tailwindcss/vite": "^4.3.3",
+    "svelte": "^5.56.1",
+    "svelte-check": "^4.6.0",
+    "tailwindcss": "^4.3.3",
+    "typescript": "^6.0.3",
+    "vite": "^8.0.16"
+  }
+}

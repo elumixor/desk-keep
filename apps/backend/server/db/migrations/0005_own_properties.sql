@@ -1,0 +1,1 @@
+ALTER TABLE "page" ADD COLUMN "own_schema" jsonb DEFAULT '[]'::jsonb NOT NULL;

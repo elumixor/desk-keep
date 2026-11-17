@@ -1,0 +1,15 @@
+node_modules
+apps/frontend/.svelte-kit/
+apps/frontend/build/
+apps/backend/.output/
+apps/backend/.nitro/
+apps/backend/public/
+apps/frontend/src/lib/api-client/
+.vercel
+.devkit/
+.env*
+!.env.example
+*.tsbuildinfo
+.DS_Store
+infra/*.tfstate*
+.claude/
